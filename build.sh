@@ -12,8 +12,8 @@ function compile() {
 
   TANGGAL=$(date +"%Y%m%d-%H")
   export ARCH=arm64
-  export KBUILD_BUILD_HOST=Nebula
-  export KBUILD_BUILD_USER="HELLINFIX"
+  export KBUILD_BUILD_HOST=HYPERION
+  export KBUILD_BUILD_USER="DEEZNUTZ"
 
   # Allocate 100GB of memory to ccache
   ccache -M 100G
@@ -66,10 +66,10 @@ echo  " Failed to compile zImage, fix the errors first "
 else
 echo -e " Build succesful, generating flashable zip now "
 rm -rf AnyKernel
-git clone --depth=1 https://github.com/HELLINFIX/AnyKernel3 AnyKernel
+git clone --depth=1 https://github.com/daizeuz-dred/AnyKernel3 AnyKernel
 cp out/arch/arm64/boot/Image.gz-dtb AnyKernel
 cd AnyKernel
-zip -r9 Nebula-${TANGGAL}.zip *
+zip -r9 HYPERION-V1-${TANGGAL}.zip *
 curl -F "file=@Nebula-${TANGGAL}.zip" https://store1.gofile.io/uploadFile
 cd ../
 fi
