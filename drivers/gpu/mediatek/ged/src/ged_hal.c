@@ -592,7 +592,7 @@ GED_ERROR ged_hal_init(void)
 
         /* Hyperion: Force 'hal' directory permissions to 0755 to allow PowerHAL/Shell 'search' access */
         if (hal_kobj && hal_kobj->sd) {
-                hal_kobj->sd->s_mode = (hal_kobj->sd->s_mode & ~S_IALLUGO) | 0755;
+                hal_kobj->sd->mode = (hal_kobj->sd->mode & ~S_IALLUGO) | 0755;
         }
 
 	err = ged_sysfs_create_file(hal_kobj,
