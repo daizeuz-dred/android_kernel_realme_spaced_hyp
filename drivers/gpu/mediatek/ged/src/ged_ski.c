@@ -116,6 +116,14 @@ static ssize_t gpu_max_clock_store(struct kobject *kobj,
 			if (kstrtoint(acBuffer, 0, &max_freq) == 0) {
 				if (max_freq <= 0)
 					return -EINVAL;
+                                /* * HYPERION FIX:
+                                 * Standard Android PowerHAL sends Hz (9-digits).
+                                 * This driver compares against kHz (power_table).
+                                 * Convert Hz to kHz.
+                                 */
+                                if (min_freq >= 1000000) {
+                                        min_freq /= 1000;
+                                }
 
 				power_table = pass_gpu_table_to_eara();
 				table_num = mt_gpufreq_get_dvfs_table_num();
@@ -170,6 +178,14 @@ static ssize_t gpu_min_clock_store(struct kobject *kobj,
 			if (kstrtoint(acBuffer, 0, &min_freq) == 0) {
 				if (min_freq <= 0)
 					return -EINVAL;
+                                /* * HYPERION FIX:
+                                 * Standard Android PowerHAL sends Hz (9-digits).
+                                 * This driver compares against kHz (power_table).
+                                 * Convert Hz to kHz.
+                                 */
+                                if (min_freq >= 1000000) {
+                                        min_freq /= 1000;
+                                }
 
 				power_table = pass_gpu_table_to_eara();
 				table_num = mt_gpufreq_get_dvfs_table_num();
