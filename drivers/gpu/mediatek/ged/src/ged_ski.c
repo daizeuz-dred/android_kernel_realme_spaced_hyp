@@ -121,8 +121,8 @@ static ssize_t gpu_max_clock_store(struct kobject *kobj,
                                  * This driver compares against kHz (power_table).
                                  * Convert Hz to kHz.
                                  */
-                                if (min_freq >= 1000000) {
-                                        min_freq /= 1000;
+                                if (max_freq >= 1000000) {
+                                        max_freq /= 1000;
                                 }
 
 				power_table = pass_gpu_table_to_eara();
