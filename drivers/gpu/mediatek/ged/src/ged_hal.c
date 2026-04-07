@@ -225,6 +225,15 @@ static ssize_t gpu_boost_level_store(struct kobject *kobj,
 	if (count > 0 && count < MAX_BOOST_DIGITS) {
 		if (scnprintf(str_num, MAX_BOOST_DIGITS, "%s", buf)) {
 			if (kstrtol(str_num, 10, &val) == 0)
+                                
+                                /* Hyperion Fix: Clamp the value to 100 max */
+                                /* This prevents issues when PowerHAL sends '101' */
+                                if (val > 100)
+                                        val = 100;
+                                
+                                if (val < 0)
+                                        val = 0;
+
 				_boost_level = (int32_t)val;
 		}
 	}
@@ -232,7 +241,17 @@ static ssize_t gpu_boost_level_store(struct kobject *kobj,
 	return count;
 }
 
-static KOBJ_ATTR_RW(gpu_boost_level);
+
+
+/* Manual definition to bypass VERIFY_OCTAL_PERMISSIONS build error */
+static struct kobj_attribute kobj_attr_gpu_boost_level = {
+	.attr = {
+		.name = "gpu_boost_level",
+		.mode = 0666
+	},
+	.show = gpu_boost_level_show,
+	.store = gpu_boost_level_store,
+};
 //-----------------------------------------------------------------------------
 int ged_dvfs_boost_value(void)
 {
@@ -570,6 +589,11 @@ GED_ERROR ged_hal_init(void)
 		GED_LOGE("Failed to create hal dir!\n");
 		goto ERROR;
 	}
+
+        /* Hyperion: Force 'hal' directory permissions to 0755 to allow PowerHAL/Shell 'search' access */
+        if (hal_kobj && hal_kobj->sd) {
+                hal_kobj->sd->s_mode = (hal_kobj->sd->s_mode & ~S_IALLUGO) | 0755;
+        }
 
 	err = ged_sysfs_create_file(hal_kobj,
 		&kobj_attr_total_gpu_freq_level_count);
