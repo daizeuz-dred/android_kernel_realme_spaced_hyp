@@ -732,6 +732,10 @@
 	/* mt,bled_curr_mode; */
 };
 
+&vibr_oc {
+    status = "disabled";
+};
+
 /*#include <oplus6781_20684/cust.dtsi>*/
 /*#include "mediatek/cust_mt6781_camera.dtsi"*/
 #include "camera_ldo_mt6781.dtsi"
