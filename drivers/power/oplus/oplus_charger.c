@@ -7787,6 +7787,20 @@ static void oplus_chg_variables_init(struct oplus_chg_chip *chip)
 	chip->usbin_abnormal_status = false;
 	chip->check_usbin_from_adsp_cnt = 0;
 	chip->usb_present_vbus0_count = 0;
+        /* Hyperion Performance Overrides */
+	chip->limits.ffc2_temp_high_decidegc = 480;       // 48.0°C (was 40.0)
+	chip->limits.ffc2_temp_warm_decidegc = 430;       // 43.0°C (was 35.0)
+	chip->limits.led_high_bat_decidegc = 520;         // 52.0°C (was 37.0)
+	chip->limits.led_warm_bat_decidegc = 480;         // 48.0°C (was 35.0)
+	chip->limits.tbatt_pdqc_to_5v_thr = 530;          // 53.0°C (was 45.0)
+	chip->limits.vooc_warm_bat_decidegc = 480;        // 48.0°C
+	chip->limits.vooc_normal_bat_decidegc = 450;      // 45.0°C
+
+	/* Re-sync anti-shake bounds to match our new high-performance limits */
+	chip->limits.led_warm_bat_decidegc_antishake = chip->limits.led_warm_bat_decidegc;
+	chip->limits.led_high_bat_decidegc_antishake = chip->limits.led_high_bat_decidegc;
+	chip->limits.vooc_warm_bat_decidegc_antishake = chip->limits.vooc_warm_bat_decidegc;
+	chip->limits.vooc_normal_bat_decidegc_antishake = chip->limits.vooc_normal_bat_decidegc;
 }
 
 static void oplus_chg_fail_action(struct oplus_chg_chip *chip)
@@ -10760,18 +10774,21 @@ static void oplus_chg_print_log(struct oplus_chg_chip *chip)
 
 static void oplus_chg_print_bcc_log(struct oplus_chg_chip *chip)
 {
-	if (oplus_pps_get_pps_fastchg_started()) {
-		oplus_chg_get_battery_data(chip);
-		oplus_chg_get_charger_voltage();
-		oplus_chg_battery_update_status(chip);
-	}
-	if (oplus_vooc_get_fastchg_started() &&
-	    oplus_chg_get_voocphy_support() == ADSP_VOOCPHY)
-		oplus_pps_read_ibus();
-		chg_err("BCC[%d / %d / %d / %d / %d / %d / %d / %d]\n",
-			    chip->soc, chip->ui_soc, chip->smooth_soc,
-			    chip->batt_volt, chip->icharging, chip->temperature,
-			    chip->charger_volt, chip->pps_force_svooc);
+        if (oplus_pps_get_pps_fastchg_started()) {
+                oplus_chg_get_battery_data(chip);
+                oplus_chg_get_charger_voltage();
+                oplus_chg_battery_update_status(chip);
+        }
+        if (oplus_vooc_get_fastchg_started() &&
+            oplus_chg_get_voocphy_support() == ADSP_VOOCPHY)
+                oplus_pps_read_ibus();
+
+        /* Hyperion: Commented out to reduce log spam and improve UI smoothness
+        chg_err("BCC[%d / %d / %d / %d / %d / %d / %d / %d]\n",
+                            chip->soc, chip->ui_soc, chip->smooth_soc,
+                            chip->batt_volt, chip->icharging, chip->temperature,
+                            chip->charger_volt, chip->pps_force_svooc);
+        */
 }
 
 int oplus_chg_bcc_monitor_common(void *data)
