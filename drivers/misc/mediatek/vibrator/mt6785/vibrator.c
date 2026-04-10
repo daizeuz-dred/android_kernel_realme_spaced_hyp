@@ -45,7 +45,7 @@ void vibr_Disable_HW(struct regulator *reg)
 void init_vibr_oc_handler(void (*vibr_oc_func)(void))
 {
 #ifdef CONFIG_MTK_PMIC_NEW_ARCH
-	pmic_register_interrupt_callback(INT_VIBR_OC, vibr_oc_func);
+	// pmic_register_interrupt_callback(INT_VIBR_OC, vibr_oc_func);
 #endif
 }
 
