@@ -1,0 +1,101 @@
+name: Build Hyperion Kernel
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Wanna do dirty build? (y/n)'
+        required: true
+        default: 'n'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Kernel Source
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 1
+
+      - name: Install Dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y libelf-dev libarchive-tools zstd flex bc ccache libc++-dev libc++abi-dev zip curl
+
+      - name: Setup Cache (ccache)
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-
+
+      - name: Download Clang
+        run: |
+          git clone --depth=1 https://gitlab.com/HELLINFIX/aosp-clang-17.0.0.git clang
+          cd clang
+          bash <(curl -s https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman) --patch=glibc
+          cd ..
+
+      - name: Build Kernel
+        run: |
+          export USE_CCACHE=1
+          export CCACHE_EXEC=$(which ccache)
+          ccache -M 100G
+          
+          TANGGAL=$(date +"%Y%m%d-%H")
+          echo "TANGGAL=$TANGGAL" >> $GITHUB_ENV
+          
+          export ARCH=arm64
+          export KBUILD_BUILD_HOST=HYPERION
+          export KBUILD_BUILD_USER="DEEZNUTZ"
+          
+          # Handle Clean vs Dirty build based on input
+          if [[ "${{ github.event.inputs.build_type }}" == "n" ]]; then
+            echo "Performing Clean Build"
+            rm -rf out && mkdir -p out
+          else
+            echo "Performing Dirty Build"
+            mkdir -p out
+          fi
+
+          # Add clang to PATH
+          export PATH="${PWD}/clang/bin:${PATH}"
+          
+          # Defconfig
+          make -j$(nproc --all) O=out ARCH=arm64 spaced_defconfig
+          
+          # Compile
+          make -j$(nproc --all) O=out \
+            CC="clang" \
+            LLVM=1 \
+            CONFIG_NO_ERROR_ON_MISMATCH=y 2>&1 | tee build.log
+
+      - name: Package & Upload
+        run: |
+          zimage=out/arch/arm64/boot/Image.gz-dtb
+          if [ ! -f "$zimage" ]; then
+            echo "Build failed, Image.gz-dtb not found!"
+            exit 1
+          fi
+          
+          echo "Build successful, generating flashable zip..."
+          git clone --depth=1 https://github.com/daizeuz-dred/AnyKernel3 AnyKernel
+          cp "$zimage" AnyKernel/
+          cd AnyKernel
+          
+          ZIP_NAME="HYPERION-V1-${{ env.TANGGAL }}.zip"
+          zip -r9 "$ZIP_NAME" *
+          
+          echo "Uploading to Gofile..."
+          curl -F "file=@$ZIP_NAME" https://store1.gofile.io/uploadFile | tee upload_link.json
+          
+          # Also upload as a GitHub Artifact so you don't lose it if Gofile fails
+          mv "$ZIP_NAME" ../
+          
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Hyperion-Kernel-Build
+          path: "*.zip"
