@@ -1756,40 +1756,57 @@ static int __init mtk_cooler_mutt_init(void)
 		goto err_unreg;
 
 	/* create a proc file */
-	{
-		struct proc_dir_entry *entry = NULL;
-		struct proc_dir_entry *dir_entry = NULL;
+        {
+                struct proc_dir_entry *entry = NULL;
+                struct proc_dir_entry *dir_entry = NULL;
 
-		dir_entry = mtk_thermal_get_proc_drv_therm_dir_entry();
-		if (!dir_entry) {
-			mtk_cooler_mutt_dprintk_always(
-				"[%s]: mkdir /proc/driver/thermal failed\n",
-				__func__);
-		} else {
-			entry = proc_create("clmutt", 0664, dir_entry,
-					&cl_mutt_fops);
-			if (entry)
-				proc_set_user(entry, uid, gid);
+                dir_entry = mtk_thermal_get_proc_drv_therm_dir_entry();
+                if (!dir_entry) {
+                        mtk_cooler_mutt_dprintk_always(
+                                "[%s]: mkdir /proc/driver/thermal failed\n",
+                                __func__);
+                } else {
+                        entry = proc_create("clmutt", 0664, dir_entry,
+                                        &cl_mutt_fops);
+                        if (entry) {
+                                proc_set_user(entry, uid, gid);
+                        } else {
+                                mtk_cooler_mutt_dprintk_always(
+                                        "[Hyperion] %s: /proc/driver/thermal/clmutt entry creation skipped or node busy\n",
+                                        __func__);
+                        }
 #if FEATURE_MUTT_V2
-			entry = proc_create("clmutt_tm_pid", 0664, dir_entry,
-							&clmutt_tm_pid_fops);
-			if (entry)
-				proc_set_user(entry, uid, gid);
+                        entry = proc_create("clmutt_tm_pid", 0664, dir_entry,
+                                                        &clmutt_tm_pid_fops);
+                        if (entry) {
+                                proc_set_user(entry, uid, gid);
+                        } else {
+                                mtk_cooler_mutt_dprintk_always(
+                                        "[Hyperion] %s: clmutt_tm_pid node busy, skipping\n", __func__);
+                        }
 #endif
 #if FEATURE_THERMAL_DIAG
-			entry = proc_create("clmutt_tmd_pid", 0664, dir_entry,
-							&clmutt_tmd_pid_fops);
-			if (entry)
-				proc_set_user(entry, uid, gid);
+                        entry = proc_create("clmutt_tmd_pid", 0664, dir_entry,
+                                                        &clmutt_tmd_pid_fops);
+                        if (entry) {
+                                proc_set_user(entry, uid, gid);
+                        } else {
+                                mtk_cooler_mutt_dprintk_always(
+                                        "[Hyperion] %s: clmutt_tmd_pid node busy, skipping\n", __func__);
+                        }
 #endif
 #if defined(FEATURE_MUTT_INTERFACE_VER)
-			entry = proc_create("clmutt_tuning", 0664, dir_entry,
-							&clmutt_tuning_fops);
-			if (entry)
-				proc_set_user(entry, uid, gid);
+                        entry = proc_create("clmutt_tuning", 0664, dir_entry,
+                                                        &clmutt_tuning_fops);
+                        if (entry) {
+                                proc_set_user(entry, uid, gid);
+                        } else {
+                                mtk_cooler_mutt_dprintk_always(
+                                        "[Hyperion] %s: clmutt_tuning node busy, skipping\n", __func__);
+                        }
 #endif
-		}
-	}
+                }
+        }
 
 #if FEATURE_ADAPTIVE_MUTT
 	/* create_debugfs_entries(); */
