@@ -1346,7 +1346,7 @@ void tscpu_config_all_tc_hw_protect(int temperature, int temperature2)
 		wd_api->wd_thermal_direct_mode_config(WD_REQ_DIS,
 					WD_REQ_RST_MODE);	/* reset mode */
 	} else {
-		tscpu_warn("%d FAILED TO GET WD API\n", __LINE__);
+		/*tscpu_warn("%d FAILED TO GET WD API\n", __LINE__);*/
 		WARN_ON_ONCE(1);
 	}
 #if THERMAL_PERFORMANCE_PROFILE

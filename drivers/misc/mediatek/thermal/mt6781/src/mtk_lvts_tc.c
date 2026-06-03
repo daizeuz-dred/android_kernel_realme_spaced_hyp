@@ -2041,7 +2041,7 @@ static void lvts_disable_rgu_reset(void)
 				WD_REQ_DIS, WD_REQ_RST_MODE);
 
 	} else {
-		lvts_warn("%d FAILED TO GET WD API\n", __LINE__);
+		/*lvts_warn("%d FAILED TO GET WD API\n", __LINE__);*/
 		WARN_ON_ONCE(1);
 	}
 }
