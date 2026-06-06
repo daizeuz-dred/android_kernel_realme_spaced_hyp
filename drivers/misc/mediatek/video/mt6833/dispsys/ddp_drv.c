@@ -675,14 +675,29 @@ static void __exit disp_exit(void)
 static int __init disp_late(void)
 {
 	int ret = 0;
+	// Add tracking flags to guard the active power lines
+	static bool bias_regulator_initialized = false;
+	static bool bias_regulator_enabled = false;
 
 	DDPMSG("disp driver(1) %s begin\n", __func__);
-	/* for rt5081 */
-	ret = display_bias_regulator_init();
-	if (ret < 0)
-		pr_info("get dsv_pos fail, ret = %d\n", ret);
 
-	disp_late_bias_enable();
+	/* for rt5081 - Map parameters exactly once */
+	if (!bias_regulator_initialized) {
+		ret = display_bias_regulator_init();
+		if (ret < 0) {
+			pr_info("get dsv_pos fail, ret = %d\n", ret);
+		} else {
+			bias_regulator_initialized = true;
+		}
+	}
+
+	/* Only enable power lines if the rails are completely cold */
+	if (!bias_regulator_enabled) {
+		disp_late_bias_enable();
+		bias_regulator_enabled = true;
+	} else {
+		DDPMSG("[LUNARIS_HACK] Bias regulator already hot. Bypassing duplicate enable.\n");
+	}
 
 	DDPMSG("disp driver(1) %s end\n", __func__);
 	return 0;

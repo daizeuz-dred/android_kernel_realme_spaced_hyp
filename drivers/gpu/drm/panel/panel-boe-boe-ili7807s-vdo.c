@@ -228,43 +228,49 @@ static int lcm_panel_bias_regulator_init(void)
 	return ret; /* must be 0 */
 }
 
+/* [LUNARIS_HACK] Defined globally so both enable and disable functions can access it */
+static int bias_enable_flag = 0;
+
 static int lcm_panel_bias_enable(void)
 {
-	int ret = 0;
-	int retval = 0;
-	static int bias_enable_flag = 0;
-	lcm_panel_bias_regulator_init();
+        int ret = 0;
+        int retval = 0;
+        // REMOVED: static int bias_enable_flag = 0; <- Delete this line completely
 
-	/* set voltage with min & max*/
-	ret = regulator_set_voltage(disp_bias_pos, 5550000, 5550000);
-	if (ret < 0)
-		pr_err("set voltage disp_bias_pos fail, ret = %d\n", ret);
-	retval |= ret;
+        /* [LUNARIS_HACK] Move guard to the top to intercept duplicate user-space 120Hz calls cleanly */
+        if (bias_enable_flag && regulator_is_enabled(disp_bias_pos) && regulator_is_enabled(disp_bias_neg))
+        {
+                pr_info("[LUNARIS_HACK] bias regulator already enabled! Bypassing duplicate setup cleanly.\n");
+                return 0; /* Return success immediately without touching hardware or throwing errors */
+        }
 
-	ret = regulator_set_voltage(disp_bias_neg, 5550000, 5550000);
-	if (ret < 0)
-		pr_err("set voltage disp_bias_neg fail, ret = %d\n", ret);
-	retval |= ret;
+        lcm_panel_bias_regulator_init();
 
-	if( bias_enable_flag && regulator_is_enabled(disp_bias_pos)&&regulator_is_enabled(disp_bias_neg))
-	{
-		pr_err("bias regulator already enabled !\n");
-		return retval;
-	}
-	bias_enable_flag = 1;
+        /* set voltage with min & max*/
+        ret = regulator_set_voltage(disp_bias_pos, 5550000, 5550000);
+        if (ret < 0)
+                pr_err("set voltage disp_bias_pos fail, ret = %d\n", ret);
+        retval |= ret;
 
-	/* enable regulator */
-	ret = regulator_enable(disp_bias_pos);
-	if (ret < 0)
-		pr_err("enable regulator disp_bias_pos fail, ret = %d\n", ret);
-	retval |= ret;
+        ret = regulator_set_voltage(disp_bias_neg, 5550000, 5550000);
+        if (ret < 0)
+                pr_err("set voltage disp_bias_neg fail, ret = %d\n", ret);
+        retval |= ret;
 
-	ret = regulator_enable(disp_bias_neg);
-	if (ret < 0)
-		pr_err("enable regulator disp_bias_neg fail, ret = %d\n", ret);
-	retval |= ret;
+        bias_enable_flag = 1;
 
-	return retval;
+        /* enable regulator */
+        ret = regulator_enable(disp_bias_pos);
+        if (ret < 0)
+                pr_err("enable regulator disp_bias_pos fail, ret = %d\n", ret);
+        retval |= ret;
+
+        ret = regulator_enable(disp_bias_neg);
+        if (ret < 0)
+                pr_err("enable regulator disp_bias_neg fail, ret = %d\n", ret);
+        retval |= ret;
+
+        return retval;
 }
 
 static int lcm_panel_bias_disable(void)
@@ -283,6 +289,9 @@ static int lcm_panel_bias_disable(void)
 	if (ret < 0)
 		pr_err("disable regulator disp_bias_pos fail, ret = %d\n", ret);
 	retval |= ret;
+
+        /* [LUNARIS_HACK] Reset the flag when panel goes to sleep */
+        bias_enable_flag = 0;
 
 	return retval;
 }
