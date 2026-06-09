@@ -7169,38 +7169,48 @@ static inline bool debug_get_val(char *buf, char *token, unsigned long *val)
 }
 
 static ssize_t swappiness_para_write(struct file *file,
-		const char __user *buff, size_t len, loff_t *ppos)
+                const char __user *buff, size_t len, loff_t *ppos)
 {
-	char kbuf[PARA_BUF_LEN] = {'0'};
-	char *str;
-	long val;
+        char kbuf[PARA_BUF_LEN] = {'0'};
+        char *str;
+        long val;
 
-	if (len > PARA_BUF_LEN - 1) {
-		pr_err("len %d is too long\n", len);
-		return -EINVAL;
-	}
+        if (len > PARA_BUF_LEN - 1) {
+                pr_err("len %d is too long\n", len);
+                return -EINVAL;
+        }
 
-	if (copy_from_user(&kbuf, buff, len))
-		return -EFAULT;
-	kbuf[len] = '\0';
+        if (copy_from_user(&kbuf, buff, len))
+                return -EFAULT;
+        kbuf[len] = '\0';
 
-	str = strstrip(kbuf);
-	if (!str) {
-		pr_err("buff %s is invalid\n", kbuf);
-		return -EINVAL;
-	}
+        str = strstrip(kbuf);
+        if (!str) {
+                pr_err("buff %s is invalid\n", kbuf);
+                return -EINVAL;
+        }
 
-	if (!debug_get_val(str, "vm_swappiness=", &val)) {
-		vm_swappiness = val;
-		return len;
-	}
+        if (!debug_get_val(str, "vm_swappiness=", &val)) {
+                /* If userspace tries to set swappiness lower than 120, force it to 120 */
+                if (val < 120) {
+                        vm_swappiness = 120;
+                } else {
+                        vm_swappiness = val;
+                }
+                return len;
+        }
 
-	if (!debug_get_val(str, "swapd_swappiness=", &val)) {
-		hybridswapd_swappiness = val;
-		return len;
-	}
+        if (!debug_get_val(str, "swapd_swappiness=", &val)) {
+                /* Make sure the swap daemon stays equally aggressive */
+                if (val < 120) {
+                        hybridswapd_swappiness = 120;
+                } else {
+                        hybridswapd_swappiness = val;
+                }
+                return len;
+        }
 
-	return -EINVAL;
+        return -EINVAL;
 }
 
 static ssize_t swappiness_para_read(struct file *file,

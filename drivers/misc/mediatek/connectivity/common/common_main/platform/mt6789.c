@@ -1527,6 +1527,10 @@ static INT32 consys_check_reg_readable(VOID)
 	INT32 can_read = 0;
 	UINT32 value = 0;
 
+	/* Skip if CONSYS is powered off (e.g. during suspend) */
+	if (wmt_lib_get_drv_status(WMTDRV_TYPE_WMT) == DRV_STS_POWER_OFF)
+		return 0;
+
 	if (conn_reg.mcu_cfg_on_base != 0 &&
 	    conn_reg.mcu_top_misc_on_base != 0) {
 		/*check connsys clock and sleep status*/
