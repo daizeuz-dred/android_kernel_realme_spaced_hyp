@@ -88,13 +88,17 @@ void pmic_enable_interrupt(enum PMIC_IRQ_ENUM intNo, unsigned int en, char *str)
 	if (intNo == INT_ENUM_MAX) {
 		pr_notice(PMICTAG "[%s] disable intNo=%d\n", __func__, intNo);
 		return;
-	} else if (pmic_cb->callback == NULL) {
-		pr_notice(PMICTAG "[%s] No callback at intNo=%d\n",
-			__func__, intNo);
+        } else if (pmic_cb->callback == NULL) {
+		if (intNo != 44) {
+			pr_notice(PMICTAG "[%s] No callback at intNo=%d\n",
+					__func__, intNo);
+		}
 		return;
 	} else if (IS_ERR_OR_NULL(pmic_dev)) {
-		pr_notice(PMICTAG "[%s] pmic_dev not initalize %d\n",
-			__func__, intNo);
+		if (intNo != 44) {
+			pr_notice(PMICTAG "[%s] pmic_dev not initalize %d\n",
+					__func__, intNo);
+		}
 		return;
 	}
 	irq = mt6358_irq_get_virq(pmic_dev->parent, intNo);

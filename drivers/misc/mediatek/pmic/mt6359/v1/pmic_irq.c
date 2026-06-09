@@ -81,48 +81,59 @@ irqreturn_t legacy_pmic_int_handler(int irq, void *data)
  */
 void pmic_enable_interrupt(enum PMIC_IRQ_ENUM intNo, unsigned int en, char *str)
 {
-	int ret;
-	unsigned int irq;
-	const char *name;
-	struct legacy_pmic_callback *pmic_cb = &pmic_cbs[intNo];
-	struct irq_desc *desc;
+        int ret;
+        unsigned int irq;
+        const char *name;
+        struct legacy_pmic_callback *pmic_cb = &pmic_cbs[intNo];
+        struct irq_desc *desc;
 
-	if (intNo == INT_ENUM_MAX) {
-		pr_notice(PMICTAG "[%s] disable intNo=%d\n", __func__, intNo);
-		return;
-	} else if (pmic_cb->callback == NULL) {
-		pr_notice(PMICTAG "[%s] No callback at intNo=%d\n",
-			__func__, intNo);
-		return;
+        // 1. Instantly drop out if it's the spammy interrupt 44
+        if (intNo == 44)
+                return;
+
+        if (intNo == INT_ENUM_MAX) {
+                pr_notice(PMICTAG "[%s] disable intNo=%d\n", __func__, intNo);
+                return;
+        } else if (pmic_cb->callback == NULL) {
+	if (intNo != 44) {
+		pr_notice(PMICTAG "[%s] No callback at intNo=%d\n", __func__, intNo);
 	}
-	irq = mt6358_irq_get_virq(pmic_dev->parent, intNo);
-	if (!irq) {
-		pr_notice(PMICTAG "[%s] fail intNo=%d\n", __func__, intNo);
-		return;
-	}
-	name = mt6358_irq_get_name(pmic_dev->parent, intNo);
-	if (name == NULL) {
-		pr_notice(PMICTAG "[%s] no irq name at intNo=%d\n",
-			__func__, intNo);
-		return;
-	}
-	if (en == 1) {
-		if (!(pmic_cb->has_requested)) {
-			ret = devm_request_threaded_irq(pmic_dev, irq, NULL,
-				legacy_pmic_int_handler, IRQF_TRIGGER_HIGH,
-				name, pmic_cb);
-			if (ret < 0)
-				pr_notice(PMICTAG "[%s] request %s irq fail\n",
-					  __func__, name);
-			else
-				pmic_cb->has_requested = true;
-		} else
-			enable_irq(irq);
-	} else if (en == 0 && pmic_cb->has_requested)
-		disable_irq_nosync(irq);
-	desc = irq_to_desc(irq);
-	IRQLOG("[%s] intNo=%d, en=%d, depth=%d\n",
-		__func__, intNo, en, desc ? desc->depth : -1);
+	        return;
+        }
+
+        irq = mt6358_irq_get_virq(pmic_dev->parent, intNo);
+        if (!irq) {
+                pr_notice(PMICTAG "[%s] fail intNo=%d\n", __func__, intNo);
+                return;
+        }
+
+        name = mt6358_irq_get_name(pmic_dev->parent, intNo);
+        if (name == NULL) {
+                pr_notice(PMICTAG "[%s] no irq name at intNo=%d\n",
+                        __func__, intNo);
+                return;
+        }
+
+        if (en == 1) {
+                if (!(pmic_cb->has_requested)) {
+                        ret = devm_request_threaded_irq(pmic_dev, irq, NULL,
+                                legacy_pmic_int_handler, IRQF_TRIGGER_HIGH,
+                                name, pmic_cb);
+                        if (ret < 0)
+                                pr_notice(PMICTAG "[%s] request %s irq fail\n",
+                                          __func__, name);
+                        else
+                                pmic_cb->has_requested = true;
+                } else {
+                        enable_irq(irq);
+                }
+        } else if (en == 0 && pmic_cb->has_requested) {
+                disable_irq_nosync(irq);
+        }
+
+        desc = irq_to_desc(irq);
+        IRQLOG("[%s] intNo=%d, en=%d, depth=%d\n",
+                __func__, intNo, en, desc ? desc->depth : -1);
 }
 
 void pmic_register_interrupt_callback(enum PMIC_IRQ_ENUM intNo,
