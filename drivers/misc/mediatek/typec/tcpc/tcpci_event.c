@@ -469,58 +469,64 @@ static bool __pd_put_deferred_tcp_event(
 }
 
 bool pd_put_deferred_tcp_event(
-	struct tcpc_device *tcpc, const struct tcp_dpm_event *tcp_event)
+        struct tcpc_device *tcpc, const struct tcp_dpm_event *tcp_event)
 {
-	bool ret = true;
-	struct pd_port *pd_port = &tcpc->pd_port;
+        bool ret = true;
+        struct pd_port *pd_port = &tcpc->pd_port;
 
-	mutex_lock(&pd_port->pd_lock);
-	mutex_lock(&tcpc->access_lock);
+        mutex_lock(&pd_port->pd_lock);
+        mutex_lock(&tcpc->access_lock);
 
-	if (!tcpc->pd_pe_running || tcpc->pd_wait_pe_idle) {
-		PD_ERR("pd_put_tcp_event failed0\n");
-		ret = false;
-		goto unlock_out;
-	}
+        if (!tcpc->pd_pe_running || tcpc->pd_wait_pe_idle) {
+#if 0
+                pr_debug("pd_put_tcp_event failed0\n");
+#endif
+                ret = false;
+                goto unlock_out;
+        }
 
-	if (tcpc->tcp_event_count >= TCP_EVENT_BUF_SIZE) {
-		PD_ERR("pd_put_tcp_event failed1\n");
-		ret = false;
-		goto unlock_out;
-	}
+        if (tcpc->tcp_event_count >= TCP_EVENT_BUF_SIZE) {
+#if 0
+                pr_debug("pd_put_tcp_event failed1\n");
+#endif
+                ret = false;
+                goto unlock_out;
+        }
 
-	if (tcpc->pd_wait_hard_reset_complete) {
-		PD_ERR("pd_put_tcp_event failed2\n");
-		ret = false;
-		goto unlock_out;
-	}
+        if (tcpc->pd_wait_hard_reset_complete) {
+#if 0
+                pr_debug("pd_put_tcp_event failed2\n");
+#endif
+                ret = false;
+                goto unlock_out;
+        }
 
-	switch (tcp_event->event_id) {
-	case TCP_DPM_EVT_DISCOVER_CABLE:
-	case TCP_DPM_EVT_CABLE_SOFTRESET:
-		dpm_reaction_set(pd_port,
-			DPM_REACTION_DYNAMIC_VCONN |
-			DPM_REACTION_VCONN_STABLE_DELAY);
-		break;
-	}
+        switch (tcp_event->event_id) {
+        case TCP_DPM_EVT_DISCOVER_CABLE:
+        case TCP_DPM_EVT_CABLE_SOFTRESET:
+                dpm_reaction_set(pd_port,
+                        DPM_REACTION_DYNAMIC_VCONN |
+                        DPM_REACTION_VCONN_STABLE_DELAY);
+                break;
+        }
 
-	ret = __pd_put_deferred_tcp_event(tcpc, tcp_event);
+        ret = __pd_put_deferred_tcp_event(tcpc, tcp_event);
 #ifdef CONFIG_USB_PD_REV30
 #ifdef CONFIG_USB_PD_REV30_COLLISION_AVOID
-	if (ret)
-		pd_port->pe_data.pd_traffic_idle = false;
-	if (tcpc->tcp_event_count == 1)
-		tcpc_enable_timer(tcpc, PD_TIMER_DEFERRED_EVT);
-#endif	/* CONFIG_USB_PD_REV30_COLLISION_AVOID */
-#endif	/* CONFIG_USB_PD_REV30 */
+        if (ret)
+                pd_port->pe_data.pd_traffic_idle = false;
+        if (tcpc->tcp_event_count == 1)
+                tcpc_enable_timer(tcpc, PD_TIMER_DEFERRED_EVT);
+#endif  /* CONFIG_USB_PD_REV30_COLLISION_AVOID */
+#endif  /* CONFIG_USB_PD_REV30 */
 
-	dpm_reaction_set_ready_once(pd_port);
+        dpm_reaction_set_ready_once(pd_port);
 
 unlock_out:
-	mutex_unlock(&tcpc->access_lock);
-	mutex_unlock(&pd_port->pd_lock);
+        mutex_unlock(&tcpc->access_lock);
+        mutex_unlock(&pd_port->pd_lock);
 
-	return ret;
+        return ret;
 }
 
 void pd_notify_tcp_vdm_event_2nd_result(struct pd_port *pd_port, uint8_t ret)
