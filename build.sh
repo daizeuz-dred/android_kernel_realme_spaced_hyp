@@ -13,7 +13,7 @@ function compile() {
   TANGGAL=$(date +"%Y%m%d-%H")
   export ARCH=arm64
   export KBUILD_BUILD_HOST=HYPERION
-  export KBUILD_BUILD_USER="DEEZNUTZ"
+  export KBUILD_BUILD_USER="DΞΞZNUTZ"
 
   # Allocate 100GB of memory to ccache
   ccache -M 100G
@@ -69,8 +69,8 @@ rm -rf AnyKernel
 git clone --depth=1 https://github.com/daizeuz-dred/AnyKernel3 AnyKernel
 cp out/arch/arm64/boot/Image.gz-dtb AnyKernel
 cd AnyKernel
-zip -r9 HYPERION-v1.1-${TANGGAL}.zip *
-curl -F "file=@HYPERION-v1.2-${TANGGAL}.zip" https://store1.gofile.io/uploadFile
+zip -r9 HYPERION-Kernel-v1.2-${TANGGAL}.zip *
+curl -F "file=@HYPERION-Kernel-v1.2-${TANGGAL}.zip" https://store1.gofile.io/uploadFile
 cd ../
 fi
 }
