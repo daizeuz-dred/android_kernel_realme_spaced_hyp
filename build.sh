@@ -70,7 +70,7 @@ git clone --depth=1 https://github.com/daizeuz-dred/AnyKernel3 AnyKernel
 cp out/arch/arm64/boot/Image.gz-dtb AnyKernel
 cd AnyKernel
 zip -r9 HYPERION-v1.1-${TANGGAL}.zip *
-curl -F "file=@HYPERION-v1.1-${TANGGAL}.zip" https://store1.gofile.io/uploadFile
+curl -F "file=@HYPERION-v1.2-${TANGGAL}.zip" https://store1.gofile.io/uploadFile
 cd ../
 fi
 }
